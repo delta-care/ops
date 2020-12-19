@@ -19,4 +19,9 @@ spec:
         image: deltacare/web-src:0.1.0
         ports:
         - containerPort: 80
+        env:
+        - name: VUE_APP_EMPRESA_API
+          value: "https://web-bef.herokuapp.com"
+        - name: VUE_APP_USUARIO_API
+          value: "https://web-bef.herokuapp.com"
 
