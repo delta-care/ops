@@ -1,18 +1,36 @@
----
-kind: PersistentVolume
 apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: jenkins
-  labels:
-    type: local
+  name: jenkins-pv
+  namespace: ops
 spec:
-  storageClassName: jenkins-storage
   capacity:
-    storage: 16Gi
+    storage: 20Gi
+  volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/jenkins"
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: jenkins-storage
+  local:
+    path: /opt/jenkins
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - worker01-k8
+          - worker02-k8
+
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: jenkins-storage
+  namespace: ops
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -20,9 +38,9 @@ metadata:
   name: jenkins-pv-claim
   namespace: ops
 spec:
-  storageClassName: jenkins-storage
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
+  storageClassName: jenkins-storage
   resources:
     requests:
-      storage: 16Gi
+      storage: 10Gi
