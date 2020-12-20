@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deltacare
+  namespace: dev
+data:
+  VUE_APP_EMPRESA_API: "https://web-bef.herokuapp.com"
+  VUE_APP_USUARIO_API: "https://web-bef.herokuapp.com"
