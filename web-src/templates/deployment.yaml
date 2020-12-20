@@ -47,6 +47,17 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          env:
+          - name: VUE_APP_EMPRESA_API
+            valueFrom:
+              configMapKeyRef:
+                name: deltacare
+                key: VUE_APP_EMPRESA_API
+          - name: VUE_APP_USUARIO_API
+            valueFrom:
+              configMapKeyRef:
+                name: deltacare
+                key: VUE_APP_USUARIO_API
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
