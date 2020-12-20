@@ -22,9 +22,11 @@ spec:
         env:
         - name: VUE_APP_EMPRESA_API
           valueFrom:
-            name: deltacare
-            key: VUE_APP_EMPRESA_API
+            configMapKeyRef:
+              name: deltacare
+              key: VUE_APP_EMPRESA_API
         - name: VUE_APP_USUARIO_API
           valueFrom:
-            name: deltacare
-            key: VUE_APP_USUARIO_API
+            configMapKeyRef:
+              name: deltacare
+              key: VUE_APP_USUARIO_API
