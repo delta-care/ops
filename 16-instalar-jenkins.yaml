@@ -39,3 +39,18 @@ spec:
       targetPort: 50000
   selector:
     app: jenkins
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jenkins
+  namespace: ops
+spec:
+  rules:
+  - host: jenkins.deltacare.xyz
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: jenkins
+          servicePort: 8080
