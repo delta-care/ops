@@ -4,5 +4,10 @@ metadata:
   name: deltacare
   namespace: dev
 data:
-  VUE_APP_EMPRESA_API: "https://web-bef.herokuapp.com"
+  VUE_APP_EMPRESA_API: "http://dev.deltacare.xyz/api/v1/empresas"
   VUE_APP_USUARIO_API: "https://web-bef.herokuapp.com"
+
+# Após aplicar esse yaml, deve-se reiniciar o pod pelo comando 
+# abaixo para que ele reconheça os novos valores acima, caso 
+# algum tenha sido alterado.
+# kubectl rollout restart deployment.apps/web-src -n dev
