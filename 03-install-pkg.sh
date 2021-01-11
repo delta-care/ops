@@ -8,5 +8,5 @@ export AWS_SECRET_ACCESS_KEY='ZuXOootthlJ2c/ElNKBnO2lO/L+qk2z+mD1RwNkp'
 #pip install botocore
 
 # install packages
-ansible-inventory -i ./inventory/aws_ec2.yaml --graph
-ansible-playbook -u ubuntu -i ./inventory/aws_ec2.yaml 03-pkg.yml
+ansible-inventory -i ./ansible/inventory/aws_ec2.yaml --graph
+ansible-playbook -v -u ubuntu -i ./ansible/inventory/aws_ec2.yaml ./ansible/main.yml

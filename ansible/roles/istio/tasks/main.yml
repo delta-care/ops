@@ -1,0 +1,28 @@
+---
+- name: Download istioctl
+  get_url:
+    url: https://istio.io/downloadIstioctl
+    dest: /home/ubuntu
+
+- name: Install istioctl
+  become: yes
+  become_user: ubuntu
+  command: "sh downloadIstioCtl.sh"
+
+- name: Add istioctl to the path via .bashrc
+  lineinfile: dest=/home/ubuntu/.bashrc line='export PATH=$PATH:$HOME/.istioctl/bin' insertafter='EOF' regexp='export PATH=\$PATH:$HOME/.istioctl/bin' state=present
+
+- name: Install istio
+  become: yes
+  become_user: ubuntu
+  command: "/home/ubuntu/.istioctl/bin/istioctl install --set profile=demo -y"
+
+- name: Inject istio on the k8s
+  become: yes
+  become_user: ubuntu
+  command: "kubectl label namespace default istio-injection=enabled"
+
+- name: Verify istio install 
+  become: yes
+  become_user: ubuntu
+  command: "/home/ubuntu/.istioctl/bin/istioctl verify-install"

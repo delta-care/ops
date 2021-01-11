@@ -1,0 +1,7 @@
+- name: Environment Setup
+  become: yes
+  hosts: all
+  roles:
+    - docker
+    - k8s
+    - istio
