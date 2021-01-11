@@ -12,11 +12,23 @@ resource "aws_key_pair" "lenovod" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group
-resource "aws_security_group" "ssh_all" {  
-    name = "ssh_all"  
+resource "aws_security_group" "k8s-sg" {  
+    name = "k8s-sg"  
+    ingress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        self = true
+    }
     ingress {
         from_port   = 22
         to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+        from_port   = 80
+        to_port     = 80
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -29,12 +41,12 @@ resource "aws_security_group" "ssh_all" {
 } 
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
-resource "aws_instance" "k8s" {
+resource "aws_instance" "k8s-ec2" {
     ami = "ami-0dd9f0e7df0f0a138"
-    instance_type = "t2.micro"
+    instance_type = "t2.medium"
     key_name = "lenovod"
-    security_groups = ["ssh_all"]
+    security_groups = ["k8s-sg"]
     tags = {
-        Name = "k8s"
+        Name = "k8s-ec2"
     }
 }

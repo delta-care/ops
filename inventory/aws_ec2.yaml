@@ -4,4 +4,4 @@ aws_secret_key: ZuXOootthlJ2c/ElNKBnO2lO/L+qk2z+mD1RwNkp
 regions:
   - us-east-2
 filters:
-  tag:Name: k8s
+  tag:Name: k8s-ec2
