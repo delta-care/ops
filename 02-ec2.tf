@@ -38,6 +38,3 @@ resource "aws_instance" "k8s" {
         Name = "k8s"
     }
 }
-
-# apply these confs
-# terraform apply -auto-approve

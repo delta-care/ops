@@ -1,0 +1,7 @@
+plugin: aws_ec2
+aws_access_key: AKIAISWJGNS3VY6HQQVA
+aws_secret_key: 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
+regions:
+  - us-east-2
+filters:
+  tag:Name: k8s
