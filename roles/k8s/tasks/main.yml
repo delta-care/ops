@@ -15,37 +15,25 @@
     name: "{{ item }}"
   loop: "{{ k8s_packages }}"
 
+- name: Reload configs and restart kubelet
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kubelet
+
 - name: Disable swap
   command: swapoff -a
 
-- name: Ensure they can see bridge traffic
-  sysctl:
-    name: "{{ item }}"
-    value: '1'
-    state: present
-  with_items:
-  - net.bridge.bridge-nf-call-iptables
-  - net.bridge.bridge-nf-call-ip6tables
-
-- name: Destroy cluster before starting again
-  command: kubeadm reset -f
-
 - name: Initialize k8s cluster
-  command: kubeadm init
-  register: kubeadm_init_output
-
-- name: Install pod network
-  command: kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+  command: "kubeadm init --pod-network-cidr=10.244.0.0/16"
 
 - name: Create .kube directory
   become: yes
   become_user: ubuntu
   file:
-    path: $HOME/.kube
+    path: /home/ubuntu/.kube
     state: directory
-    mode: 0600
+    mode: 0755
 
 - name: Copy admin.conf to user's kube config
   copy:
@@ -53,6 +41,14 @@
     dest: /home/ubuntu/.kube/config
     remote_src: yes
     owner: ubuntu
+    mode: 0644
 
-#- name: Define control plane node isolation
-#  command: kubectl taint nodes --all node-role.kubernetes.io/master-
+- name: Install pod network
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Allow pods on master node
+  become: yes
+  become_user: ubuntu
+  command: "kubectl taint nodes --all node-role.kubernetes.io/master-"
