@@ -1,0 +1,15 @@
+---
+- name: Create dev namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl create ns dev"
+
+- name: Inject istio on dev namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl label namespace dev istio-injection=enabled"
+
+- name: Verify injection istio on dev namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl get ns -L istio-injection"

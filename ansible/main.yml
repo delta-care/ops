@@ -1,7 +1,13 @@
-- name: Environment Setup
+- name: Install packages
   become: yes
   hosts: all
   roles:
-    - docker
-    - k8s
+#    - docker
+#    - k8s
     - istio
+
+#- name: Configurate environments
+#  become: yes
+#  hosts: all
+#  roles:
+#    - dev
