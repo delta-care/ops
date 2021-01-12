@@ -32,11 +32,6 @@
   become_user: ubuntu
   command: "kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/jaeger.yaml"
 
-- name: Install kiali addon 
-  become: yes
-  become_user: ubuntu
-  command: "kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/kiali.yaml"
-
 - name: Install prometheus addon 
   become: yes
   become_user: ubuntu
@@ -51,3 +46,8 @@
   become: yes
   become_user: ubuntu
   command: "kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.1.0/cert-manager.yaml"
+
+- name: Install kiali addon 
+  become: yes
+  become_user: ubuntu
+  command: "kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/kiali.yaml"

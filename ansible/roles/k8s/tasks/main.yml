@@ -52,3 +52,56 @@
   become: yes
   become_user: ubuntu
   command: "kubectl taint nodes --all node-role.kubernetes.io/master-"
+- name: Install k8s dashboard
+  become: yes
+  become_user: ubuntu
+  command: "kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml"
+
+- name: Inject istio on k8s dashboard namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl label namespace kubernetes-dashboard istio-injection=enabled"
+
+- name: Create nodeport service to expose k8s dash
+  become: yes
+  become_user: ubuntu
+  command: "kubectl expose deployment kubernetes-dashboard --name=kubernetes-dashboard-nodeport --target-port=8443 --port=443 --type=NodePort -n kubernetes-dashboard"
+
+- name: Create the service account for k8s dashboard
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: admin-user
+        namespace: kubernetes-dashboard
+      EOF
+
+- name: Create the cluster role binding for k8s dashboard
+  become: yes
+  become_user: ubuntu
+  shell: 
+      cmd: | 
+        cat <<EOF | kubectl apply -f -
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: admin-user
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: cluster-admin
+        subjects:
+        - kind: ServiceAccount
+          name: admin-user
+          namespace: kubernetes-dashboard
+        EOF
+
+# get the nodeport of k8s dash
+# kubectl get svc/kubernetes-dashboard-nodeport -n kubernetes-dashboard
+
+# get k8s dash token
+# kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')

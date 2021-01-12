@@ -1,9 +1,9 @@
-- name: Install packages
+- name: Install tools
   become: yes
   hosts: all
   roles:
-#    - docker
-#    - k8s
+    - docker
+    - k8s
     - istio
 
 #- name: Configurate environments
