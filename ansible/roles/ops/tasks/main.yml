@@ -1,0 +1,313 @@
+---
+- name: Create ops namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl create ns ops"
+  
+- name: Create keycloak service
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: keycloak
+        namespace: ops
+        labels:
+          app: keycloak
+      spec:
+        ports:
+        - name: http
+          port: 8080
+          targetPort: 8080
+        selector:
+          app: keycloak
+        type: ClusterIP
+      EOF
+
+- name: Create keycloak deployment
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: keycloak
+        namespace: ops
+        labels:
+          app: keycloak
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: keycloak
+        template:
+          metadata:
+            labels:
+              app: keycloak
+          spec:
+            containers:
+            - name: keycloak
+              image: quay.io/keycloak/keycloak:6.0.1
+              env:
+              - name: KEYCLOAK_USER
+                value: "admin"
+              - name: KEYCLOAK_PASSWORD
+                value: "admin"
+              - name: PROXY_ADDRESS_FORWARDING
+                value: "true"
+              ports:
+              - name: http
+                containerPort: 8080
+              - name: https
+                containerPort: 8443
+              readinessProbe:
+                httpGet:
+                  path: /auth/realms/master
+                  port: 8080
+      EOF
+
+- name: Create jenkins deployment
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: jenkins
+        namespace: ops
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: jenkins
+        template:
+          metadata:
+            labels:
+              app: jenkins
+          spec:
+            containers:
+            - name: jenkins
+              image: jenkins/jenkins:2.263.1-lts
+              ports:
+              - containerPort: 8080
+              volumeMounts:
+                - name: jenkins-home
+                  mountPath: /var/jenkins_home
+            volumes:
+              - name: jenkins-home
+                emptyDir: {}
+      EOF
+
+- name: Create jenkins service
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: jenkins
+        namespace: ops
+      spec:
+        type: ClusterIP
+        ports:
+          - name: jenkins
+            port: 8080
+            targetPort: 8080
+          - name: tunnel
+            port: 50000
+            targetPort: 50000
+        selector:
+          app: jenkins
+      EOF
+- name: Create role for jenkins user
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        namespace: dev
+        name: pod-reader
+      rules:
+        - apiGroups: ["", "apps", "networking.k8s.io"]
+          resources: ["pods","secrets", "serviceaccounts", "services", "deployments","ingresses"]
+          verbs: ["get", "watch", "list", "create", "update","patch"]
+      EOF
+
+- name: Create role bidding with jenkins user (default)
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: read-pods
+        namespace: dev
+      subjects:
+      - kind: User
+        name: "system:serviceaccount:ops:default"
+        apiGroup: rbac.authorization.k8s.io
+      roleRef:
+        kind: Role 
+        name: pod-reader
+        apiGroup: rbac.authorization.k8s.io
+      EOF
+ get admin password to proceed to installation:
+ kubectl logs deploy/jenkins -n ops
+- name: Create persistence volume for maven on jenkins
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: PersistentVolume
+      metadata:
+        name: maven-pv
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        capacity: 
+          storage: 10Gi
+        hostPath: 
+          path: "/mnt/.m2"
+      EOF
+   
+- name: Create persistence volume claim for maven on jenkins 
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata: 
+        name: maven-repo
+        namespace: ops
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        resources: 
+          requests:
+            storage: 10Gi
+      EOF
+
+# install plugins
+# https://plugins.jenkins.io/kubernetes/
+# https://plugins.jenkins.io/sonar/
+# https://www.jenkins.io/doc/pipeline/steps/pipeline-utility-steps/
+
+# create credentials
+# github, dockerhub, sonarcloud, kubeconf
+
+- name: Create istio gateway for ops namespace 
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: Gateway
+      metadata:
+        name: gateway
+        namespace: ops
+      spec:
+        servers:
+          - hosts:
+              - jenkins.ops.deltacare.xyz
+              - sso.deltacare.xyz
+            port:
+              name: http
+              number: 80
+              protocol: HTTP
+      EOF
+- name: Create virtual service for jenkins service
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: jenkins-vs
+        namespace: ops 
+      spec:
+        gateways:
+          - gateway
+        hosts:
+          - jenkins.ops.deltacare.xyz
+        http:
+          - match:
+              - port: 80
+            route:
+              - destination:
+                  host: jenkins
+                  port:
+                    number: 8080
+      EOF
+                
+- name: Create virtual service for jenkins tunnel service
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: tunnel-jenkins-vs
+        namespace: ops 
+      spec:
+        gateways:
+          - gateway
+        hosts:
+          - tunnel.jenkins.ops.deltacare.xyz
+        http:
+          - match:
+              - port: 80
+            route:
+              - destination:
+                  host: jenkins
+                  port:
+                    number: 50000
+      EOF
+
+- name: Create virtual service for jenkins tunnel service
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: keycloak-vs
+        namespace: ops 
+      spec:
+        gateways:
+          - gateway
+        hosts:
+          - sso.deltacare.xyz
+        http:
+          - match:
+              - port: 80
+            route:
+              - destination:
+                  host: keycloak
+                  port:
+                    number: 8080
+      EOF
