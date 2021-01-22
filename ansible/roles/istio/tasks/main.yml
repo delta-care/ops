@@ -63,6 +63,15 @@
               name: http
               number: 80
               protocol: HTTP
+          - hosts:
+              - kiali.ops.deltacare.xyz
+              - grafana.ops.deltacare.xyz
+              - prometheus.ops.deltacare.xyz
+              - jaeger.ops.deltacare.xyz
+            port:
+              name: https
+              number: 443
+              protocol: HTTP
       EOF
 
 - name: Create virtual service for kiali service
@@ -84,6 +93,7 @@
         http:
           - match:
               - port: 80
+              - port: 443
             route:
               - destination:
                   host: kiali
@@ -110,6 +120,7 @@
         http:
           - match:
               - port: 80
+              - port: 443
             route:
               - destination:
                   host: grafana
@@ -136,6 +147,7 @@
         http:
           - match:
               - port: 80
+              - port: 443
             route:
               - destination:
                   host: prometheus
@@ -162,6 +174,7 @@
         http:
           - match:
               - port: 80
+              - port: 443
             route:
               - destination:
                   host: tracing
