@@ -10,5 +10,5 @@
   become: yes
   hosts: all
   roles:
-#    - ops
-    - dev
+    - ops
+#    - dev
