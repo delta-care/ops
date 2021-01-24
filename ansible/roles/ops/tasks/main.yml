@@ -1,109 +1,109 @@
 ---
-- name: Create ops namespace
-  become: yes
-  become_user: ubuntu
-  command: "kubectl create ns ops"
-  
-- name: Create keycloak service
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: keycloak
-        namespace: ops
-        labels:
-          app: keycloak
-      spec:
-        ports:
-        - name: http
-          port: 8080
-          targetPort: 8080
-        selector:
-          app: keycloak
-        type: ClusterIP
-      EOF
-
-- name: Create keycloak deployment
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: keycloak
-        namespace: ops
-        labels:
-          app: keycloak
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: keycloak
-        template:
-          metadata:
-            labels:
-              app: keycloak
-          spec:
-            containers:
-            - name: keycloak
-              image: quay.io/keycloak/keycloak:6.0.1
-              env:
-              - name: KEYCLOAK_USER
-                value: "admin"
-              - name: KEYCLOAK_PASSWORD
-                value: "admin"
-              - name: PROXY_ADDRESS_FORWARDING
-                value: "true"
-              ports:
-              - name: http
-                containerPort: 8080
-              - name: https
-                containerPort: 8443
-              readinessProbe:
-                httpGet:
-                  path: /auth/realms/master
-                  port: 8080
-      EOF
-
-- name: Create jenkins deployment
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: jenkins
-        namespace: ops
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: jenkins
-        template:
-          metadata:
-            labels:
-              app: jenkins
-          spec:
-            containers:
-            - name: jenkins
-              image: jenkins/jenkins:2.263.1-lts
-              ports:
-              - containerPort: 8080
-              volumeMounts:
-                - name: jenkins-home
-                  mountPath: /var/jenkins_home
-            volumes:
-              - name: jenkins-home
-                emptyDir: {}
-      EOF
+#- name: Create ops namespace
+#  become: yes
+#  become_user: ubuntu
+#  command: "kubectl create ns ops"
+#  
+#- name: Create keycloak service
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: v1
+#      kind: Service
+#      metadata:
+#        name: keycloak
+#        namespace: ops
+#        labels:
+#          app: keycloak
+#      spec:
+#        ports:
+#        - name: http
+#          port: 8080
+#          targetPort: 8080
+#        selector:
+#          app: keycloak
+#        type: ClusterIP
+#      EOF
+#
+#- name: Create keycloak deployment
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: apps/v1
+#      kind: Deployment
+#      metadata:
+#        name: keycloak
+#        namespace: ops
+#        labels:
+#          app: keycloak
+#      spec:
+#        replicas: 1
+#        selector:
+#          matchLabels:
+#            app: keycloak
+#        template:
+#          metadata:
+#            labels:
+#              app: keycloak
+#          spec:
+#            containers:
+#            - name: keycloak
+#              image: quay.io/keycloak/keycloak:6.0.1
+#              env:
+#              - name: KEYCLOAK_USER
+#                value: "admin"
+#              - name: KEYCLOAK_PASSWORD
+#                value: "admin"
+#              - name: PROXY_ADDRESS_FORWARDING
+#                value: "true"
+#              ports:
+#              - name: http
+#                containerPort: 8080
+#              - name: https
+#                containerPort: 8443
+#              readinessProbe:
+#                httpGet:
+#                  path: /auth/realms/master
+#                  port: 8080
+#      EOF
+#
+#- name: Create jenkins deployment
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: apps/v1
+#      kind: Deployment
+#      metadata:
+#        name: jenkins
+#        namespace: ops
+#      spec:
+#        replicas: 1
+#        selector:
+#          matchLabels:
+#            app: jenkins
+#        template:
+#          metadata:
+#            labels:
+#              app: jenkins
+#          spec:
+#            containers:
+#            - name: jenkins
+#              image: jenkins/jenkins:2.263.1-lts
+#              ports:
+#              - containerPort: 8080
+#              volumeMounts:
+#                - name: jenkins-home
+#                  mountPath: /var/jenkins_home
+#            volumes:
+#              - name: jenkins-home
+#                emptyDir: {}
+#      EOF
       
 - name: Create role for jenkins user
   become: yes
@@ -117,9 +117,9 @@
         namespace: dev
         name: pod-reader
       rules:
-        - apiGroups: ["","apps","networking.k8s.io","security.istio.io","networking.istio.io"]
-          resources: ["pods","secrets","serviceaccounts","services","deployments","ingresses","configmaps","authorizationpolicies","virtualservices"]
-          verbs: ["get", "watch", "list", "create", "update","patch"]
+        - apiGroups: ["","apps","networking.k8s.io","rbac.authorization.k8s.io","security.istio.io","networking.istio.io"]
+          resources: ["pods","secrets","serviceaccounts","services","deployments","ingresses","configmaps","authorizationpolicies","virtualservices","roles","rolebindings","requestauthentications","endpoints"]
+          verbs: ["get","watch","list","create","update","patch"]
       EOF
 
 - name: Create role bidding with jenkins user (default)
