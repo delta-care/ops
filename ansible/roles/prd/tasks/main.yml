@@ -1,0 +1,115 @@
+---
+- name: Create prd namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl create ns prd"
+
+- name: Inject istio on prd namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl label namespace prd istio-injection=enabled"
+
+- name: Create istio gateway for prd namespace 
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: Gateway
+      metadata:
+        name: gateway
+        namespace: prd
+      spec:
+        servers: 
+          - port:
+              number: 80
+              name: http
+              protocol: HTTP
+            hosts:
+              - app.deltacare.xyz
+            tls:
+              httpsRedirect: true
+          - port:
+              name: https
+              number: 443
+              protocol: HTTP
+            hosts:
+              - app.deltacare.xyz
+      EOF
+   
+- name: Create virtual service for prd namespace
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: vs
+        namespace: prd 
+      spec:
+        hosts:
+          - app.deltacare.xyz
+        gateways:
+          - gateway
+        http:
+          - match:
+              - uri:
+                  exact: /api/v1/empresas
+              - uri:
+                  exact: /api/v1/empresas/
+              - uri:
+                  regex: '/api/v1/empresas/[0-9]+'
+            name: api-empresa
+            route:
+              - destination:
+                  host: api-empresa
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  exact: /api/v1/produtos
+              - uri:
+                  exact: /api/v1/produtos/
+              - uri:
+                  regex: '/api/v1/produtos/[0-9]+'
+            name: api-produto
+            route:
+              - destination:
+                  host: api-produto
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  prefix: /api/v1/empresas/
+            name: api-empresa-swagger
+            rewrite:
+              uri: /
+            route:
+              - destination:
+                  host: api-empresa
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  prefix: /api/v1/produtos/
+            name: api-produto-swagger
+            rewrite:
+              uri: /
+            route:
+              - destination:
+                  host: api-produto
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  prefix: /
+            name: web
+            route:
+              - destination:
+                  host: spa
+                  port:
+                    number: 80
+      EOF

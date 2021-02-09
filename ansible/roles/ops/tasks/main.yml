@@ -105,7 +105,24 @@
 #                emptyDir: {}
 #      EOF
       
-- name: Create role for jenkins user
+#- name: Create role for jenkins user on dev ns
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: rbac.authorization.k8s.io/v1
+#      kind: Role
+#      metadata:
+#        namespace: dev
+#        name: pod-reader
+#      rules:
+#        - apiGroups: ["","apps","networking.k8s.io","rbac.authorization.k8s.io","security.istio.io","networking.istio.io"]
+#          resources: ["pods","secrets","serviceaccounts","services","deployments","ingresses","configmaps","authorizationpolicies","virtualservices","roles","rolebindings","requestauthentications","endpoints"]
+#          verbs: ["get","watch","list","create","update","patch","delete"]
+#      EOF
+
+- name: Create role for jenkins user on prd ns
   become: yes
   become_user: ubuntu
   shell: 
@@ -114,15 +131,15 @@
       apiVersion: rbac.authorization.k8s.io/v1
       kind: Role
       metadata:
-        namespace: dev
+        namespace: prd
         name: pod-reader
       rules:
         - apiGroups: ["","apps","networking.k8s.io","rbac.authorization.k8s.io","security.istio.io","networking.istio.io"]
           resources: ["pods","secrets","serviceaccounts","services","deployments","ingresses","configmaps","authorizationpolicies","virtualservices","roles","rolebindings","requestauthentications","endpoints"]
           verbs: ["get","watch","list","create","update","patch","delete"]
       EOF
-
-- name: Create role bidding with jenkins user (default)
+      
+- name: Create role bidding with jenkins user (default) on dev ns
   become: yes
   become_user: ubuntu
   shell: 
@@ -133,6 +150,27 @@
       metadata:
         name: read-pods
         namespace: dev
+      subjects:
+      - kind: User
+        name: "system:serviceaccount:ops:default"
+        apiGroup: rbac.authorization.k8s.io
+      roleRef:
+        kind: Role 
+        name: pod-reader
+        apiGroup: rbac.authorization.k8s.io
+      EOF
+
+- name: Create role bidding with jenkins user (default) on prd ns
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: read-pods
+        namespace: prd
       subjects:
       - kind: User
         name: "system:serviceaccount:ops:default"
@@ -192,85 +230,85 @@
 # create credentials
 # github, dockerhub, sonarcloud, kubeconf
 
-- name: Create istio gateway for ops namespace 
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.istio.io/v1alpha3
-      kind: Gateway
-      metadata:
-        name: gateway
-        namespace: ops
-      spec:
-        servers:
-          - hosts:
-            - sso.deltacare.xyz
-            - jenkins.ops.deltacare.xyz
-            port:
-              name: http
-              number: 80
-              protocol: HTTP
-          - hosts:
-            - jenkins.ops.deltacare.xyz
-            - sso.deltacare.xyz
-            port:
-              name: https
-              number: 443
-              protocol: HTTP
-      EOF
-      
-- name: Create virtual service for jenkins service
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.istio.io/v1alpha3
-      kind: VirtualService
-      metadata:
-        name: jenkins-vs
-        namespace: ops 
-      spec:
-        gateways:
-          - gateway
-        hosts:
-          - jenkins.ops.deltacare.xyz
-        http:
-          - match:
-              - port: 80
-              - port: 443
-            route:
-              - destination:
-                  host: jenkins
-                  port:
-                    number: 8080
-      EOF
-
-- name: Create virtual service for jenkins tunnel service
-  become: yes
-  become_user: ubuntu
-  shell: 
-    cmd: | 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: networking.istio.io/v1alpha3
-      kind: VirtualService
-      metadata:
-        name: keycloak-vs
-        namespace: ops 
-      spec:
-        gateways:
-          - gateway
-        hosts:
-          - sso.deltacare.xyz
-        http:
-          - match:
-              - port: 80
-              - port: 443
-            route:
-              - destination:
-                  host: keycloak
-                  port:
-                    number: 8080
-      EOF
+#- name: Create istio gateway for ops namespace 
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: networking.istio.io/v1alpha3
+#      kind: Gateway
+#      metadata:
+#        name: gateway
+#        namespace: ops
+#      spec:
+#        servers:
+#          - hosts:
+#            - sso.deltacare.xyz
+#            - jenkins.ops.deltacare.xyz
+#            port:
+#              name: http
+#              number: 80
+#              protocol: HTTP
+#          - hosts:
+#            - jenkins.ops.deltacare.xyz
+#            - sso.deltacare.xyz
+#            port:
+#              name: https
+#              number: 443
+#              protocol: HTTP
+#      EOF
+#      
+#- name: Create virtual service for jenkins service
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: networking.istio.io/v1alpha3
+#      kind: VirtualService
+#      metadata:
+#        name: jenkins-vs
+#        namespace: ops 
+#      spec:
+#        gateways:
+#          - gateway
+#        hosts:
+#          - jenkins.ops.deltacare.xyz
+#        http:
+#          - match:
+#              - port: 80
+#              - port: 443
+#            route:
+#              - destination:
+#                  host: jenkins
+#                  port:
+#                    number: 8080
+#      EOF
+#
+#- name: Create virtual service for jenkins tunnel service
+#  become: yes
+#  become_user: ubuntu
+#  shell: 
+#    cmd: | 
+#      cat <<EOF | kubectl apply -f -
+#      apiVersion: networking.istio.io/v1alpha3
+#      kind: VirtualService
+#      metadata:
+#        name: keycloak-vs
+#        namespace: ops 
+#      spec:
+#        gateways:
+#          - gateway
+#        hosts:
+#          - sso.deltacare.xyz
+#        http:
+#          - match:
+#              - port: 80
+#              - port: 443
+#            route:
+#              - destination:
+#                  host: keycloak
+#                  port:
+#                    number: 8080
+#      EOF
