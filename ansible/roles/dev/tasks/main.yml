@@ -83,6 +83,19 @@
                     number: 8080
           - match:
               - uri:
+                  exact: /api/v1/faturas
+              - uri:
+                  exact: /api/v1/faturas/
+              - uri:
+                  regex: '/api/v1/faturas/[0-9]+'
+            name: api-produto
+            route:
+              - destination:
+                  host: api-fatura
+                  port:
+                    number: 8080
+          - match:
+              - uri:
                   prefix: /api/v1/empresas/
             name: api-empresa-swagger
             rewrite:
@@ -101,6 +114,17 @@
             route:
               - destination:
                   host: api-produto
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  prefix: /api/v1/faturas/
+            name: api-fatura-swagger
+            rewrite:
+              uri: /
+            route:
+              - destination:
+                  host: api-fatura
                   port:
                     number: 8080
           - match:
