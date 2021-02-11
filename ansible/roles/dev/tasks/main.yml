@@ -54,7 +54,7 @@
           - dev.deltacare.xyz
         gateways:
           - gateway
-        http:
+        http:cxvcx
           - match:
               - uri:
                   exact: /api/v1/empresas
@@ -88,10 +88,23 @@
                   exact: /api/v1/faturas/
               - uri:
                   regex: '/api/v1/faturas/[0-9]+'
-            name: api-produto
+            name: api-fatura
             route:
               - destination:
                   host: api-fatura
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  exact: /api/v1/painel
+              - uri:
+                  exact: /api/v1/painel/
+              - uri:
+                  regex: '/api/v1/painel/[0-9]+'
+            name: api-painel
+            route:
+              - destination:
+                  host: api-painel
                   port:
                     number: 8080
           - match:
@@ -125,6 +138,17 @@
             route:
               - destination:
                   host: api-fatura
+                  port:
+                    number: 8080
+          - match:
+              - uri:
+                  prefix: /api/v1/painel/
+            name: api-painel-swagger
+            rewrite:
+              uri: /
+            route:
+              - destination:
+                  host: api-painel
                   port:
                     number: 8080
           - match:
