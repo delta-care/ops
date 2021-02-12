@@ -54,7 +54,7 @@
           - dev.deltacare.xyz
         gateways:
           - gateway
-        http:cxvcx
+        http:
           - match:
               - uri:
                   exact: /api/v1/empresas
