@@ -1,42 +1,42 @@
 ---
-#- name: Create dev namespace
-#  become: yes
-#  become_user: ubuntu
-#  command: "kubectl create ns dev"
-#
-#- name: Inject istio on dev namespace
-#  become: yes
-#  become_user: ubuntu
-#  command: "kubectl label namespace dev istio-injection=enabled"
-#
-#- name: Create istio gateway for dev namespace 
-#  become: yes
-#  become_user: ubuntu
-#  shell: 
-#    cmd: | 
-#      cat <<EOF | kubectl apply -f -
-#      apiVersion: networking.istio.io/v1alpha3
-#      kind: Gateway
-#      metadata:
-#        name: gateway
-#        namespace: dev
-#      spec:
-#        servers: 
-#          - port:
-#              number: 80
-#              name: http
-#              protocol: HTTP
-#            hosts:
-#              - dev.deltacare.xyz
-#            tls:
-#              httpsRedirect: true
-#          - port:
-#              name: https
-#              number: 443
-#              protocol: HTTP
-#            hosts:
-#              - dev.deltacare.xyz
-#      EOF
+- name: Create dev namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl create ns dev"
+
+- name: Inject istio on dev namespace
+  become: yes
+  become_user: ubuntu
+  command: "kubectl label namespace dev istio-injection=enabled"
+
+- name: Create istio gateway for dev namespace 
+  become: yes
+  become_user: ubuntu
+  shell: 
+    cmd: | 
+      cat <<EOF | kubectl apply -f -
+      apiVersion: networking.istio.io/v1alpha3
+      kind: Gateway
+      metadata:
+        name: gateway
+        namespace: dev
+      spec:
+        servers: 
+          - port:
+              number: 80
+              name: http
+              protocol: HTTP
+            hosts:
+              - dev.deltacare.xyz
+            tls:
+              httpsRedirect: true
+          - port:
+              name: https
+              number: 443
+              protocol: HTTP
+            hosts:
+              - dev.deltacare.xyz
+      EOF
    
 - name: Create virtual service for dev namespace
   become: yes
