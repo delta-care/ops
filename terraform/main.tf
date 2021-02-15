@@ -7,7 +7,7 @@ provider "aws" {
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair
 resource "aws_key_pair" "k8s-kp" {
-    key_name   = "lenovod"
+    key_name   = ""
     public_key = ""
 }
 
