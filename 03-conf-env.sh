@@ -2,8 +2,8 @@
 
 # set dependencies: env vars and module
 # https://docs.ansible.com/ansible/2.5/user_guide/intro_dynamic_inventory.html#example-aws-ec2-external-inventory-script
-export AWS_ACCESS_KEY_ID='AKIAISWJGNS3VY6HQQVA'
-export AWS_SECRET_ACCESS_KEY='ZuXOootthlJ2c/ElNKBnO2lO/L+qk2z+mD1RwNkp'
+export AWS_ACCESS_KEY_ID=''
+export AWS_SECRET_ACCESS_KEY=''
 #pip install boto3
 #pip install botocore
 
