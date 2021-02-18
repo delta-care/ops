@@ -1,14 +1,14 @@
-#- name: Install tools
-# become: yes
-# hosts: all
-#  roles:
-#    - docker
-#    - k8s
-#    - istio
+- name: Install tools
+  become: yes
+  hosts: all
+  roles:
+    - docker
+    - k8s
+    - istio
 
 - name: Configurate environments
   become: yes
   hosts: all
   roles:
-#    - ops
+    - ops
     - dev
