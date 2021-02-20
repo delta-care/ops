@@ -79,8 +79,8 @@ resource "aws_security_group" "k8s-sg" {
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
 resource "aws_instance" "k8s-ec2" {
     ami = "ami-0dd9f0e7df0f0a138"
-    instance_type = "t3.large"
-    key_name = "lenovod"
+    instance_type = "t3.xlarge"
+    key_name = ""
     security_groups = ["k8s-sg"]
     tags = {
         Name = "k8s-ec2"
